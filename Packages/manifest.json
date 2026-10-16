@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.gameframex.unity.demigiant.dotween": "https://gitee.com/gameframex/com.gameframex.unity.demigiant.dotween.git",
     "com.unity.addressables": "1.22.3",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.feature.development": "1.0.1",

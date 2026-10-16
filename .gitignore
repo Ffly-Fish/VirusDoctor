@@ -31,3 +31,7 @@ Thumbs.db
 # 凭证（按你实际补）
 *.keystore
 secrets.json
+
+
+/Assets/Art
+/Assets/AddressableAssetsData

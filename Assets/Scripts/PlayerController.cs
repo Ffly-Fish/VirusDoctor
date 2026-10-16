@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -41,6 +42,8 @@ public class PlayerController : MonoBehaviour
     private Vector3 lastHorizontalDir = Vector3.forward;
     [SerializeField]
     private Weapon defaultWeapon;
+    [SerializeField]
+    private List<Weapon> weaponList = new List<Weapon>();
     private readonly List<IWeapon> weapons = new List<IWeapon>();
     private int currentWeaponIndex = -1;
 
@@ -50,7 +53,12 @@ public class PlayerController : MonoBehaviour
 
         if (defaultWeapon != null)
         {
-            AddWeapon(defaultWeapon);
+            if (!weaponList.Contains(defaultWeapon))
+            {
+                weaponList.Add(defaultWeapon);
+            }
+
+            //AddWeapon(defaultWeapon);
         }
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -85,7 +93,6 @@ public class PlayerController : MonoBehaviour
 
         // 鼠标上下移动控制相机上下旋转
         UpdateCameraRotation();
-        // 武器输入
         UpdateWeaponInput();
 
         // 获取移动输入
@@ -131,12 +138,63 @@ public class PlayerController : MonoBehaviour
         controller.Move(horizontalMove + verticalMove);
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer != LayerMask.NameToLayer("Pickup"))
+        {
+            return;
+        }
+
+        WeaponPickup pickup = other.GetComponent<WeaponPickup>();
+        if (pickup == null)
+        {
+            pickup = other.GetComponentInParent<WeaponPickup>();
+        }
+
+        if (pickup != null)
+        {
+            ActivateWeapon(pickup.WeaponName);
+            Destroy(pickup.transform.parent.gameObject);
+        }
+    }
+
+    private void ActivateWeapon(string weaponName)
+    {
+        foreach (Weapon weapon in weaponList)
+        {
+            if (weapon == null || weapon.weaponParameters == null || weapon.weaponParameters.WeaponName != weaponName)
+            {
+                continue;
+            }
+
+            if (!weapons.Contains(weapon) && !AddWeapon(weapon))
+            {
+                return;
+            }
+
+            int weaponIndex = weapons.IndexOf(weapon);
+            if (weaponIndex < 0)
+            {
+                return;
+            }
+
+            if (currentWeaponIndex >= 0 && currentWeaponIndex < weapons.Count)
+            {
+                weapons[currentWeaponIndex].SwitchWeapon(false);
+            }
+
+            currentWeaponIndex = weaponIndex;
+            weapons[currentWeaponIndex].SwitchWeapon(true);
+            return;
+        }
+    }
+
     /// <summary>
     /// 将武器加入背包；第一件武器会立即装备，其余武器默认收起。
     /// </summary>
-    public bool AddWeapon(IWeapon weapon)
+    public bool AddWeapon(Weapon weapon)
     {
-        if (weapon == null || weapons.Contains(weapon))
+        if (weapon == null || !weaponList.Contains(weapon) || weapons.Contains(weapon))
         {
             return false;
         }
@@ -146,10 +204,11 @@ public class PlayerController : MonoBehaviour
         if (currentWeaponIndex < 0)
         {
             currentWeaponIndex = 0;
+            weapon.SwitchWeapon(true);
         }
         else
         {
-            weapon.SwitchWeapon();
+            weapon.SwitchWeapon(false);
         }
 
         return true;
@@ -176,11 +235,9 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if (Game.inputManager.GetIsDown(InputAction.SwitchWeapon) && weapons.Count > 1)
+        if (Game.inputManager.GetIsDown(InputAction.SwitchWeapon))
         {
-            weapons[currentWeaponIndex].SwitchWeapon();
-            currentWeaponIndex = (currentWeaponIndex + 1) % weapons.Count;
-            weapons[currentWeaponIndex].SwitchWeapon();
+            TrySwitchWeapon();
         }
 
         IWeapon currentWeapon = weapons[currentWeaponIndex];
@@ -195,6 +252,19 @@ public class PlayerController : MonoBehaviour
             currentWeapon.Reload();
             //Debug.Log($"当前武器: {currentWeapon.GetType().Name}，重新装填！");
         }
+    }
+
+    private bool TrySwitchWeapon()
+    {
+        if (weapons.Count < 2 || currentWeaponIndex < 0 || weapons[currentWeaponIndex].IsReloading)
+        {
+            return false;
+        }
+
+        weapons[currentWeaponIndex].SwitchWeapon(false);
+        currentWeaponIndex = (currentWeaponIndex + 1) % weapons.Count;
+        weapons[currentWeaponIndex].SwitchWeapon(true);
+        return true;
     }
 
     private void UpdateCameraRotation()
