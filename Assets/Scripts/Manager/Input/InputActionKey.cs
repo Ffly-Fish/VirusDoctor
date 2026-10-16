@@ -4,5 +4,5 @@ using UnityEngine;
 public enum InputAction
 {
     MoveForward, MoveBackward, MoveLeft, MoveRight,
-    Jump, Quit, Fire, Reload, Sprint
+    Jump, Quit, Fire, Reload, Sprint, SwitchWeapon
 }

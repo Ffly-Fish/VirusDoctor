@@ -40,6 +40,10 @@ public class InputManager
     private readonly Dictionary<InputAction, bool> isPressed
         = new Dictionary<InputAction, bool>();
 
+    /// <summary>该行为是否在当帧刚刚按下。</summary>
+    private readonly Dictionary<InputAction, bool> isDown
+        = new Dictionary<InputAction, bool>();
+
     /// <summary>
     /// 累计按住时长（秒）。
     /// 蓄力释放（isOver）的当帧仍保留有效值，供蓄力技能读取；
@@ -129,6 +133,7 @@ public class InputManager
         {
             keyBindings[action] = GetDefaultKey(action);
             isPressed[action] = false;
+            isDown[action] = false;
             holdDuration[action] = 0f;
             isOver[action] = false;
         }
@@ -148,6 +153,7 @@ public class InputManager
             case InputAction.Fire: return KeyCode.Mouse0; // Fire1
             case InputAction.Reload: return KeyCode.R;
             case InputAction.Sprint: return KeyCode.LeftShift;
+            case InputAction.SwitchWeapon: return KeyCode.Tab;
             default:
                 throw new ArgumentOutOfRangeException(nameof(action), action, null);
         }
@@ -194,6 +200,7 @@ public class InputManager
             // ③ 采样【本帧】物理按键
             bool nowPressed = Input.GetKey(key);
             isPressed[action] = nowPressed;
+            isDown[action] = nowPressed && !wasPressed;
 
             // ④ 计算 isOver：本帧没按，但上一帧按过 → 这一帧就是"抬起"
             isOver[action] = !nowPressed && wasPressed;
@@ -231,6 +238,7 @@ public class InputManager
 
         // 切换按键后，旧按键的"按住/时长/抬起"状态已无意义，立即归零，避免脏数据
         isPressed[action] = false;
+        isDown[action] = false;
         holdDuration[action] = 0f;
         isOver[action] = false;
 
@@ -252,6 +260,9 @@ public class InputManager
 
     /// <summary>该行为当前是否按住。</summary>
     public bool this[InputAction action] => isPressed[action];
+
+    /// <summary>该行为是否在当帧刚刚按下。</summary>
+    public bool GetIsDown(InputAction action) => isDown[action];
 
     /// <summary>
     /// 累计按住时长（秒）。

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -38,10 +39,19 @@ public class PlayerController : MonoBehaviour
     private float verticalVelocity;
     private float cameraPitch;
     private Vector3 lastHorizontalDir = Vector3.forward;
+    [SerializeField]
+    private Weapon defaultWeapon;
+    private readonly List<IWeapon> weapons = new List<IWeapon>();
+    private int currentWeaponIndex = -1;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+
+        if (defaultWeapon != null)
+        {
+            AddWeapon(defaultWeapon);
+        }
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -75,6 +85,8 @@ public class PlayerController : MonoBehaviour
 
         // 鼠标上下移动控制相机上下旋转
         UpdateCameraRotation();
+        // 武器输入
+        UpdateWeaponInput();
 
         // 获取移动输入
         Vector3 inputDir = Game.inputManager.GetMoveDirection();
@@ -117,6 +129,72 @@ public class PlayerController : MonoBehaviour
 
         // 合并移动
         controller.Move(horizontalMove + verticalMove);
+    }
+
+    /// <summary>
+    /// 将武器加入背包；第一件武器会立即装备，其余武器默认收起。
+    /// </summary>
+    public bool AddWeapon(IWeapon weapon)
+    {
+        if (weapon == null || weapons.Contains(weapon))
+        {
+            return false;
+        }
+
+        weapons.Add(weapon);
+
+        if (currentWeaponIndex < 0)
+        {
+            currentWeaponIndex = 0;
+        }
+        else
+        {
+            weapon.SwitchWeapon();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 为背包中的指定武器增加子弹。
+    /// </summary>
+    public bool AddAmmo(IWeapon weapon, int amount)
+    {
+        if (weapon == null || amount <= 0 || !weapons.Contains(weapon))
+        {
+            return false;
+        }
+
+        weapon.AddAmmo(amount);
+        return true;
+    }
+
+    private void UpdateWeaponInput()
+    {
+        if (weapons.Count == 0 || Game.inputManager == null)
+        {
+            return;
+        }
+
+        if (Game.inputManager.GetIsDown(InputAction.SwitchWeapon) && weapons.Count > 1)
+        {
+            weapons[currentWeaponIndex].SwitchWeapon();
+            currentWeaponIndex = (currentWeaponIndex + 1) % weapons.Count;
+            weapons[currentWeaponIndex].SwitchWeapon();
+        }
+
+        IWeapon currentWeapon = weapons[currentWeaponIndex];
+        if (Game.inputManager[InputAction.Fire])
+        {
+            currentWeapon.Fire();
+            //Debug.Log($"当前武器: {currentWeapon.GetType().Name}，开火！");
+        }
+
+        if (Game.inputManager.GetIsDown(InputAction.Reload))
+        {
+            currentWeapon.Reload();
+            //Debug.Log($"当前武器: {currentWeapon.GetType().Name}，重新装填！");
+        }
     }
 
     private void UpdateCameraRotation()
