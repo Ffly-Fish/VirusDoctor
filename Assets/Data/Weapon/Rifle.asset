@@ -16,3 +16,5 @@ MonoBehaviour:
   damage: 5
   shootingInterval: 0.33
   magazineCapacity: 30
+  shootingOffset: 1
+  recoilAmount: 1

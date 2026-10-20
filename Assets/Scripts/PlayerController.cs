@@ -1,10 +1,18 @@
 using System.Collections.Generic;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController Instance { get; private set; }
+    public List<Vector3> PositionHistory { get; private set; } = new List<Vector3>();
+
+    private const float PositionHistoryInterval = 0.2f;
+    private const int PositionHistoryCapacity = 25;
+    private float positionHistoryTimer;
+
     [Header("移动速度")]
     public float walkSpeed = 4f;
 
@@ -24,7 +32,12 @@ public class PlayerController : MonoBehaviour
 
     [Header("相机控制")]
     [SerializeField]
-    private Transform playerCamera;
+    public Transform playerCamera;
+
+
+    [Header("准星")]
+    [SerializeField]
+    private Texture2D texture2D;
 
     [SerializeField]
     private float cameraPitchSensitivity = 3f;
@@ -39,6 +52,8 @@ public class PlayerController : MonoBehaviour
     private float currentSpeed;
     private float verticalVelocity;
     private float cameraPitch;
+    private Vector2 recoilOffset;
+    private Tween recoilTween;
     private Vector3 lastHorizontalDir = Vector3.forward;
     [SerializeField]
     private Weapon defaultWeapon;
@@ -49,6 +64,7 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         controller = GetComponent<CharacterController>();
 
         if (defaultWeapon != null)
@@ -62,7 +78,7 @@ public class PlayerController : MonoBehaviour
         }
 
         Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        Cursor.SetCursor(texture2D, Vector2.zero,CursorMode.ForceSoftware);
 
         if (playerCamera == null)
         {
@@ -85,6 +101,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     private void Update()
     {
         // 鼠标左右移动控制角色水平转向
@@ -96,11 +120,11 @@ public class PlayerController : MonoBehaviour
         UpdateWeaponInput();
 
         // 获取移动输入
-        Vector3 inputDir = Game.inputManager.GetMoveDirection();
+        Vector3 inputDir = InputManager.Instance.GetMoveDirection();
         bool hasInput = inputDir.sqrMagnitude > 0.01f;
 
         // 获取目标速度
-        bool isSprinting = Game.inputManager[InputAction.Sprint] && hasInput;
+        bool isSprinting = InputManager.Instance[InputAction.Sprint] && hasInput;
         float targetSpeed = hasInput ? (isSprinting ? runSpeed : walkSpeed) : 0f;
 
         // 速度平滑
@@ -123,7 +147,7 @@ public class PlayerController : MonoBehaviour
                 verticalVelocity = -2f;
             }
 
-            bool jumpPressed = Game.inputManager[InputAction.Jump];
+            bool jumpPressed = InputManager.Instance[InputAction.Jump];
 
             if (jumpPressed)
             {
@@ -136,6 +160,18 @@ public class PlayerController : MonoBehaviour
 
         // 合并移动
         controller.Move(horizontalMove + verticalMove);
+
+        positionHistoryTimer += Time.deltaTime;
+        if (positionHistoryTimer >= PositionHistoryInterval)
+        {
+            positionHistoryTimer %= PositionHistoryInterval;
+            PositionHistory.Add(transform.position);
+
+            if (PositionHistory.Count > PositionHistoryCapacity)
+            {
+                PositionHistory.RemoveAt(0);
+            }
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -230,24 +266,24 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateWeaponInput()
     {
-        if (weapons.Count == 0 || Game.inputManager == null)
+        if (weapons.Count == 0)
         {
             return;
         }
 
-        if (Game.inputManager.GetIsDown(InputAction.SwitchWeapon))
+        if (InputManager.Instance.GetIsDown(InputAction.SwitchWeapon))
         {
             TrySwitchWeapon();
         }
 
         IWeapon currentWeapon = weapons[currentWeaponIndex];
-        if (Game.inputManager[InputAction.Fire])
+        if (InputManager.Instance[InputAction.Fire])
         {
             currentWeapon.Fire();
             //Debug.Log($"当前武器: {currentWeapon.GetType().Name}，开火！");
         }
 
-        if (Game.inputManager.GetIsDown(InputAction.Reload))
+        if (InputManager.Instance.GetIsDown(InputAction.Reload))
         {
             currentWeapon.Reload();
             //Debug.Log($"当前武器: {currentWeapon.GetType().Name}，重新装填！");
@@ -256,7 +292,7 @@ public class PlayerController : MonoBehaviour
 
     private bool TrySwitchWeapon()
     {
-        if (weapons.Count < 2 || currentWeaponIndex < 0 || weapons[currentWeaponIndex].IsReloading)
+        if (weapons.Count < 2 || currentWeaponIndex < 0 || weapons[currentWeaponIndex].IsReloading || weapons[currentWeaponIndex].IsFiring)
         {
             return false;
         }
@@ -282,8 +318,49 @@ public class PlayerController : MonoBehaviour
 
         Vector3 localEulerAngles = playerCamera.localEulerAngles;
         playerCamera.localRotation = Quaternion.Euler(
-            cameraPitch,
+            Mathf.Clamp(cameraPitch + recoilOffset.x, minCameraPitch, maxCameraPitch),
             localEulerAngles.y,
             localEulerAngles.z);
+    }
+
+    public void ApplyRecoil(float recoilAmount)
+    {
+        if (recoilAmount <= 0f || playerCamera == null)
+        {
+            return;
+        }
+
+        recoilTween?.Kill();
+
+        Vector2 recoilTarget = new Vector2(
+            recoilOffset.x - Mathf.Sqrt(Random.value) * recoilAmount,
+            recoilOffset.y + (Random.value < 0.5f ? -1f : 1f) * Mathf.Sqrt(Random.value) * recoilAmount / 4f);
+
+        Tween myTween = DOTween.To(
+                () => recoilOffset,
+                value =>
+                {
+                    transform.Rotate(Vector3.up, value.y - recoilOffset.y);
+                    recoilOffset = value;
+                },
+                recoilTarget,
+                0.08f)
+            .SetEase(Ease.OutBack);
+
+        myTween.OnComplete(() =>
+        {
+            recoilTween = DOTween.To(
+                    () => recoilOffset,
+                    value =>
+                    {
+                        transform.Rotate(Vector3.up, value.y - recoilOffset.y);
+                        recoilOffset = value;
+                    },
+                    Vector2.zero,
+                    0.2f)
+                .SetEase(Ease.OutSine);
+        });
+
+        recoilTween = myTween;
     }
 }

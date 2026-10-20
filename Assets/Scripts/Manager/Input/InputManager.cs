@@ -26,8 +26,24 @@ using UnityEngine;
 ///
 /// 由外部（Game.Update()）每帧调用 Update()。
 /// </summary>
-public class InputManager
+public class InputManager : MonoBehaviour
 {
+    private static InputManager instance;
+
+    public static InputManager Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                GameObject managerObject = new GameObject(nameof(InputManager));
+                instance = managerObject.AddComponent<InputManager>();
+            }
+
+            return instance;
+        }
+    }
+
     // =====================================================================
     // 字段
     // =====================================================================
@@ -68,9 +84,25 @@ public class InputManager
     // 构造 / 持久化
     // =====================================================================
 
-    public InputManager()
+    private void Awake()
     {
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
+        DontDestroyOnLoad(gameObject);
         Load();
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
+        }
     }
 
     /// <summary>从 PlayerPrefs 读取键位；若无存档则创建默认配置并立即保存。</summary>
@@ -176,7 +208,7 @@ public class InputManager
     ///
     /// 必须在 MonoBehaviour.Update 中调用。
     /// </summary>
-    public void Update()
+    private void Update()
     {
         foreach (InputAction action in Enum.GetValues(typeof(InputAction)))
         {

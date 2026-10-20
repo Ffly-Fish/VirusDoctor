@@ -3,8 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class Weapon : IWeapon
 {
-    /// <summary>开火时生成的子弹预制体。</summary>
-    [SerializeField] private GameObject bulletPrefab;
+
     /// <summary>武器自身的动画组件。</summary>
     private Animator animator;
 
@@ -41,24 +40,16 @@ public class Weapon : IWeapon
         if (!isEquipped || isReloading || currentAmmo <= 0 || Time.time - lastShotTime < shootingInterval)
             return;
 
-        //if (SpawnBullet() == null)
-        //    return;
+        if (SpawnBullet() == null)
+            return;
+
+        isFiring = true;
+        ApplyRecoil();
         Debug.Log($"开火！伤害: {damage}, 剩余弹药: {currentAmmo - 1}/{totalAmmo - 1}");
         currentAmmo--;
         totalAmmo--;
         lastShotTime = Time.time;
         animator.SetTrigger("fire");
-    }
-
-    /// <summary>
-    /// 在武器的位置和朝向生成子弹预制体。
-    /// </summary>
-    private GameObject SpawnBullet()
-    {
-        if (bulletPrefab == null)
-            return null;
-
-        return Instantiate(bulletPrefab, transform.position, transform.rotation);
     }
 
     /// <summary>
