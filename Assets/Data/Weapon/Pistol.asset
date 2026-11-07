@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: Pistol
   m_EditorClassIdentifier: 
   weaponName: Pistol
-  damage: 10
+  damage: 30
   shootingInterval: 1
-  magazineCapacity: 15
+  magazineCapacity: 10
+  weaponSprite: {fileID: -8296621223176931708, guid: 5137305c0a712804ba5f07efd83a71fd, type: 3}
+  shootingOffset: 0
+  recoilAmount: 1

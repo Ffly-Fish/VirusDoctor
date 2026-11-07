@@ -4,7 +4,7 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Animal
+  - HPBar
   layers:
   - Default
   - TransparentFX
@@ -17,7 +17,7 @@ TagManager:
   - Projectile
   - Enemy
   - Environment
-  - 
+  - EnemyProjectile
   - 
   - 
   - 

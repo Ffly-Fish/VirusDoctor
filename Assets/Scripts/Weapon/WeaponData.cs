@@ -11,6 +11,8 @@ public class WeaponData : ScriptableObject
     [SerializeField] private float shootingInterval = 0.2f;
     /// <summary>弹夹容量。</summary>
     [SerializeField] private int magazineCapacity = 30;
+    /// <summary>武器界面显示的图标。</summary>
+    [SerializeField] private Sprite weaponSprite;
     [Header("射击设置")]
     [Tooltip("射击方向的随机偏移角度（度）。")]
     [SerializeField, Min(0f)] private float shootingOffset = 0f;
@@ -25,6 +27,8 @@ public class WeaponData : ScriptableObject
     public float ShootingInterval => shootingInterval;
     /// <summary>获取弹夹容量。</summary>
     public int MagazineCapacity => magazineCapacity;
+    /// <summary>获取武器图标。</summary>
+    public Sprite WeaponSprite => weaponSprite;
     public float ShootingOffset => shootingOffset;
     public float RecoilAmount => recoilAmount;
 }

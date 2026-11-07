@@ -3,6 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class Weapon : IWeapon
 {
+    /// <summary>获取武器数据中的界面图标。</summary>
+    public Sprite WeaponSprite => weaponParameters != null ? weaponParameters.WeaponSprite : null;
 
     /// <summary>武器自身的动画组件。</summary>
     private Animator animator;
@@ -30,6 +32,12 @@ public class Weapon : IWeapon
             animator.SetTrigger("switch");
             isReloading = false; // 切换武器时重置换弹状态
         }
+
+        if (equipped)
+        {
+            UIManager.Instance?.SetWeapon(WeaponSprite);
+            UpdateAmmoUI();
+        }
     }
 
     /// <summary>
@@ -48,6 +56,7 @@ public class Weapon : IWeapon
         Debug.Log($"开火！伤害: {damage}, 剩余弹药: {currentAmmo - 1}/{totalAmmo - 1}");
         currentAmmo--;
         totalAmmo--;
+        UpdateAmmoUI();
         lastShotTime = Time.time;
         animator.SetTrigger("fire");
     }
@@ -72,21 +81,8 @@ public class Weapon : IWeapon
         if (amount > 0)
         {
             totalAmmo += amount;
+            UpdateAmmoUI();
         }
     }
 
-    /// <summary>
-    /// 由换弹动画事件调用，在换弹动作完成时补充弹药。
-    /// </summary>
-    public void CompleteReload()
-    {
-        if (!isReloading)
-            return;
-
-        int remainingAmmoOutsideMagazine = totalAmmo - currentAmmo;
-        int ammoToLoad = Mathf.Min(magazineCapacity - currentAmmo, remainingAmmoOutsideMagazine);
-        currentAmmo += ammoToLoad;
-        isReloading = false;
-        Debug.Log($"换弹完成！当前弹药: {currentAmmo}/{totalAmmo}");
-    }
 }

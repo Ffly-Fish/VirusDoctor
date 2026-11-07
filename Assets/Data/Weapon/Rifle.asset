@@ -16,5 +16,6 @@ MonoBehaviour:
   damage: 5
   shootingInterval: 0.33
   magazineCapacity: 30
-  shootingOffset: 1
-  recoilAmount: 1
+  weaponSprite: {fileID: -1425956613385307861, guid: 5137305c0a712804ba5f07efd83a71fd, type: 3}
+  shootingOffset: 2
+  recoilAmount: 3

@@ -20,6 +20,9 @@ public abstract class IWeapon : MonoBehaviour
     [Header("枪口位置")]
     [SerializeField] private Transform muzzleTransform;
 
+    /// <summary>获取当前武器的枪口变换。</summary>
+    protected Transform MuzzleTransform => muzzleTransform;
+
     [Header("子弹预制体")]
     /// <summary>开火时生成的子弹预制体。</summary>
     [SerializeField] protected GameObject bulletPrefab;
@@ -90,6 +93,32 @@ public abstract class IWeapon : MonoBehaviour
         }
     }
 
+    /// <summary>由换弹动画事件调用，完成弹药装填。</summary>
+    public void CompleteReload()
+    {
+        if (!isReloading)
+        {
+            return;
+        }
+
+        int remainingAmmo = totalAmmo - currentAmmo;
+        int ammoToLoad = Mathf.Min(magazineCapacity - currentAmmo, remainingAmmo);
+        currentAmmo += ammoToLoad;
+        isReloading = false;
+        UpdateAmmoUI();
+        Debug.Log($"换弹完成！当前弹药: {currentAmmo}/{totalAmmo}");
+    }
+
+    /// <summary>根据当前弹夹余量更新弹药界面。</summary>
+    protected void UpdateAmmoUI()
+    {
+        if (isEquipped)
+        {
+            float ammoRatio = magazineCapacity > 0 ? (float)currentAmmo / magazineCapacity : 0f;
+            UIManager.Instance?.SetAmmo(ammoRatio);
+        }
+    }
+
     protected IProjectile SpawnBullet()
     {
         if (bulletPrefab == null)
@@ -98,8 +127,26 @@ public abstract class IWeapon : MonoBehaviour
         }
 
         Transform spawnTransform = muzzleTransform != null ? muzzleTransform : transform;
-        IProjectile projectile = null;
+        IProjectile projectile = GetAvailableProjectile(spawnTransform);
+        if (projectile == null)
+        {
+            return null;
+        }
 
+        Vector3 aimDirection = GetAimDirection(spawnTransform);
+        projectile.Initialize(spawnTransform, aimDirection, damage);
+        return projectile;
+    }
+
+    /// <summary>获取可用弹丸；池中没有可用弹丸时创建一个。</summary>
+    protected IProjectile GetAvailableProjectile(Transform spawnTransform)
+    {
+        if (bulletPrefab == null || spawnTransform == null)
+        {
+            return null;
+        }
+
+        IProjectile projectile = null;
         foreach (IProjectile pooledProjectile in projectilePool)
         {
             if (pooledProjectile is MonoBehaviour behaviour && behaviour != null && pooledProjectile.IsAvailable())
@@ -124,8 +171,6 @@ public abstract class IWeapon : MonoBehaviour
             projectilePool.Add(projectile);
         }
 
-        Vector3 aimDirection = GetAimDirection(spawnTransform);
-        projectile.Initialize(spawnTransform, aimDirection, damage);
         return projectile;
     }
 
@@ -137,7 +182,8 @@ public abstract class IWeapon : MonoBehaviour
         }
     }
 
-    private Vector3 GetAimDirection(Transform spawnTransform)
+    /// <summary>根据鼠标位置和武器散布计算瞄准方向。</summary>
+    protected Vector3 GetAimDirection(Transform spawnTransform)
     {
         Camera aimCamera = Camera.main;
         Ray aimRay = aimCamera != null
@@ -171,6 +217,11 @@ public abstract class IWeapon : MonoBehaviour
     /// 开火。
     /// </summary>
     public abstract void Fire();
+
+    /// <summary>处理开火按键松开事件，供蓄力武器在松开时发射。</summary>
+    public virtual void ReleaseFire()
+    {
+    }
 
     /// <summary>
     /// 换弹。

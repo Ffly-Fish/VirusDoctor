@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: Grenade
   m_EditorClassIdentifier: 
   weaponName: Grenade
-  damage: 20
+  damage: 40
   shootingInterval: 2
   magazineCapacity: 2
+  weaponSprite: {fileID: 881899907, guid: f1b44d8071974804c9b779d495ec48fc, type: 3}
+  shootingOffset: 0
+  recoilAmount: 0

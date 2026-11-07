@@ -7,6 +7,9 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public static PlayerController Instance { get; private set; }
+    /// <summary>
+    /// 玩家位置历史记录，用于回溯或其他功能
+    /// </summary>
     public List<Vector3> PositionHistory { get; private set; } = new List<Vector3>();
 
     private const float PositionHistoryInterval = 0.2f;
@@ -55,10 +58,27 @@ public class PlayerController : MonoBehaviour
     private Vector2 recoilOffset;
     private Tween recoilTween;
     private Vector3 lastHorizontalDir = Vector3.forward;
+
+    [Header("生命值")]
+    [SerializeField] private int maxHealth = 100;
+    /// <summary>当前生命值的内部存储。</summary>
+    private int currentHealth;
+    /// <summary>当前生命值；数值变化时同步生命条。</summary>
+    public int CurrentHealth
+    {
+        get => currentHealth;
+        private set
+        {
+            currentHealth = value;
+            UIManager.Instance?.SetHp(MaxHealth > 0 ? (float)currentHealth / MaxHealth : 0f);
+        }
+    }
+    public int MaxHealth => maxHealth;
+
+    //[SerializeField]
+    //private Weapon defaultWeapon;
     [SerializeField]
-    private Weapon defaultWeapon;
-    [SerializeField]
-    private List<Weapon> weaponList = new List<Weapon>();
+    private List<IWeapon> weaponList = new List<IWeapon>();
     private readonly List<IWeapon> weapons = new List<IWeapon>();
     private int currentWeaponIndex = -1;
 
@@ -66,16 +86,18 @@ public class PlayerController : MonoBehaviour
     {
         Instance = this;
         controller = GetComponent<CharacterController>();
+        maxHealth = Mathf.Max(1, maxHealth);
+        CurrentHealth = maxHealth;
 
-        if (defaultWeapon != null)
-        {
-            if (!weaponList.Contains(defaultWeapon))
-            {
-                weaponList.Add(defaultWeapon);
-            }
+        //if (defaultWeapon != null)
+        //{
+        //    if (!weaponList.Contains(defaultWeapon))
+        //    {
+        //        weaponList.Add(defaultWeapon);
+        //    }
 
-            //AddWeapon(defaultWeapon);
-        }
+        //    //AddWeapon(defaultWeapon);
+        //}
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.SetCursor(texture2D, Vector2.zero,CursorMode.ForceSoftware);
@@ -107,6 +129,12 @@ public class PlayerController : MonoBehaviour
         {
             Instance = null;
         }
+    }
+
+    /// <summary>同步初始生命值，处理界面管理器稍后初始化的情况。</summary>
+    private void Start()
+    {
+        UIManager.Instance?.SetHp(MaxHealth > 0 ? (float)CurrentHealth / MaxHealth : 0f);
     }
 
     private void Update()
@@ -196,7 +224,7 @@ public class PlayerController : MonoBehaviour
 
     private void ActivateWeapon(string weaponName)
     {
-        foreach (Weapon weapon in weaponList)
+        foreach (IWeapon weapon in weaponList)
         {
             if (weapon == null || weapon.weaponParameters == null || weapon.weaponParameters.WeaponName != weaponName)
             {
@@ -228,7 +256,7 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 将武器加入背包；第一件武器会立即装备，其余武器默认收起。
     /// </summary>
-    public bool AddWeapon(Weapon weapon)
+    public bool AddWeapon(IWeapon weapon)
     {
         if (weapon == null || !weaponList.Contains(weapon) || weapons.Contains(weapon))
         {
@@ -264,6 +292,19 @@ public class PlayerController : MonoBehaviour
         return true;
     }
 
+    public bool TakeDamage(int damage)
+    {
+        if (damage <= 0 || CurrentHealth <= 0)
+        {
+            return false;
+        }
+
+        CurrentHealth = Mathf.Max(0, CurrentHealth - damage);
+        AudioManager.Instance.PlaySfx("PlayerHurt");
+        Debug.Log($"玩家受到伤害: {damage}，当前生命值: {CurrentHealth}/{MaxHealth}");
+        return true;
+    }
+
     private void UpdateWeaponInput()
     {
         if (weapons.Count == 0)
@@ -281,6 +322,11 @@ public class PlayerController : MonoBehaviour
         {
             currentWeapon.Fire();
             //Debug.Log($"当前武器: {currentWeapon.GetType().Name}，开火！");
+        }
+
+        if (InputManager.Instance.GetIsOver(InputAction.Fire))
+        {
+            currentWeapon.ReleaseFire();
         }
 
         if (InputManager.Instance.GetIsDown(InputAction.Reload))
