@@ -571,7 +571,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 826ff1ae9a87e744b99924c2c70deb7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponParameters: {fileID: 11400000, guid: 5b428673799a0874fa31af30fc29ce91, type: 2}
+  weaponParameters: {fileID: 0}
+  weaponDataAddress: WeaponData/Grenade
   switchAudioClip: {fileID: 8300000, guid: 9839eb252399f0e48ad440d498d738d1, type: 3}
   fireAudioClip: {fileID: 8300000, guid: 93ae083a9b4b1df4d8833bc33b1d2446, type: 3}
   reloadAudioClip: {fileID: 8300000, guid: e45c5ebf56f4f0f4dae5e6b43e1095b1, type: 3}
@@ -1758,7 +1759,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88117c8eed2c33a4dbc6b1de190d9fb3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponParameters: {fileID: 11400000, guid: b0f7366335aee2945b3c71425a2eec4c, type: 2}
+  weaponParameters: {fileID: 0}
+  weaponDataAddress: WeaponData/Pistol
   switchAudioClip: {fileID: 8300000, guid: 9839eb252399f0e48ad440d498d738d1, type: 3}
   fireAudioClip: {fileID: 8300000, guid: 33a037496e4184f45b110420f30fff26, type: 3}
   reloadAudioClip: {fileID: 8300000, guid: 4fa47482629cb5e4ea45c714aee0165f, type: 3}

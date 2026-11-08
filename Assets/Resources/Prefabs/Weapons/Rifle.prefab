@@ -349,5 +349,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 826ff1ae9a87e744b99924c2c70deb7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponParameters: {fileID: 11400000, guid: aa86ddc3fe0716344b3dc638e10d2aff, type: 2}
+  weaponParameters: {fileID: 0}
+  weaponDataAddress: WeaponData/Rifle
   bulletPrefab: {fileID: 0}

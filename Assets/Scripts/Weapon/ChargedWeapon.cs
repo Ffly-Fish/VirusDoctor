@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>长按蓄力并在松开开火键时发射的武器。</summary>
 [RequireComponent(typeof(Animator))]
-public class ChargeWeapon : IWeapon
+public class ChargedWeapon : WeaponBase
 {
     /// <summary>蓄力时间上限，单位为秒。</summary>
     [SerializeField, Min(0.01f)] private float maxChargeTime = 2f;
@@ -20,7 +20,7 @@ public class ChargeWeapon : IWeapon
     private bool isCharging;
 
     /// <summary>获取武器图标。</summary>
-    public Sprite WeaponSprite => weaponParameters != null ? weaponParameters.WeaponSprite : null;
+    public override Sprite WeaponSprite => weaponParameters != null ? weaponParameters.WeaponSprite : null;
 
     /// <summary>初始化动画控制器及武器基础参数。</summary>
     protected override void Awake()
@@ -55,6 +55,9 @@ public class ChargeWeapon : IWeapon
     /// <summary>按住开火键时开始或持续蓄力。</summary>
     public override void Fire()
     {
+        if (!IsDataLoaded)
+            return;
+
         if (isCharging)
         {
             if (!isEquipped || isReloading)
@@ -90,7 +93,7 @@ public class ChargeWeapon : IWeapon
     /// <summary>在松开开火键时按蓄力比例发射子弹。</summary>
     public override void ReleaseFire()
     {
-        if (!isCharging)
+        if (!IsDataLoaded || !isCharging)
         {
             return;
         }
@@ -127,6 +130,9 @@ public class ChargeWeapon : IWeapon
     /// <summary>尝试开始换弹并取消当前蓄力。</summary>
     public override void Reload()
     {
+        if (!IsDataLoaded)
+            return;
+
         if (!isEquipped || isReloading || currentAmmo >= magazineCapacity || totalAmmo <= currentAmmo)
         {
             return;

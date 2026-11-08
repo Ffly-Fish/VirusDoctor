@@ -1,12 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 [RequireComponent(typeof(AudioSource))]
-public abstract class IWeapon : MonoBehaviour
+/// <summary>武器基类：统一弹药、射速、瞄准、子弹池与音效，子类只实现开火方式。</summary>
+public abstract class WeaponBase : MonoBehaviour
 {
     [Header("武器参数")]
     public WeaponData weaponParameters;
+
+    [Tooltip("Addressables 地址，例如 WeaponData/Rifle")]
+    [SerializeField] private string weaponDataAddress;
+
+    private AsyncOperationHandle<WeaponData> weaponDataHandle;
+    private bool isDataLoaded;
+
+    /// <summary>武器数据是否已经从 Addressables 加载完成。</summary>
+    public bool IsDataLoaded => isDataLoaded;
 
     [Header("切换武器音效")]
     [SerializeField] private AudioClip switchAudioClip;
@@ -47,26 +59,74 @@ public abstract class IWeapon : MonoBehaviour
 
     public bool IsFiring => isFiring;
 
+    /// <summary>武器图标，数据加载完成前可能为空。</summary>
+    public abstract Sprite WeaponSprite { get; }
+
     protected virtual void Awake()
     {
         audioSource = GetComponent<AudioSource>();
         playerController = GetComponentInParent<PlayerController>();
 
-        if (weaponParameters != null)
+        if (!string.IsNullOrEmpty(weaponDataAddress))
         {
-            damage = weaponParameters.Damage;
-            shootingInterval = weaponParameters.ShootingInterval;
-            magazineCapacity = weaponParameters.MagazineCapacity;
-            shootingOffset = weaponParameters.ShootingOffset;
-            recoilAmount = weaponParameters.RecoilAmount;
+            StartCoroutine(LoadWeaponData());
+        }
+        else
+        {
+            ApplyWeaponData(weaponParameters);
+        }
+    }
+
+    /// <summary>由切换武器动画事件调用，播放切换音效。</summary>
+    private IEnumerator LoadWeaponData()
+    {
+        weaponDataHandle = Addressables.LoadAssetAsync<WeaponData>(weaponDataAddress);
+        yield return weaponDataHandle;
+
+        if (weaponDataHandle.Status == AsyncOperationStatus.Succeeded)
+        {
+            ApplyWeaponData(weaponDataHandle.Result);
+        }
+        else
+        {
+            Debug.LogError($"武器数据加载失败：{weaponDataAddress}", this);
+            ApplyWeaponData(null);
+        }
+    }
+
+    private void ApplyWeaponData(WeaponData data)
+    {
+        weaponParameters = data;
+
+        if (data != null)
+        {
+            damage = data.Damage;
+            shootingInterval = data.ShootingInterval;
+            magazineCapacity = data.MagazineCapacity;
+            shootingOffset = data.ShootingOffset;
+            recoilAmount = data.RecoilAmount;
         }
 
         currentAmmo = magazineCapacity;
         totalAmmo = magazineCapacity * 4;
         lastShotTime = Time.time - shootingInterval;
+        isDataLoaded = true;
+
+        if (isEquipped)
+        {
+            UIManager.Instance?.SetWeapon(WeaponSprite);
+            UpdateAmmoUI();
+        }
     }
 
-    /// <summary>由切换武器动画事件调用，播放切换音效。</summary>
+    protected virtual void OnDestroy()
+    {
+        if (weaponDataHandle.IsValid())
+        {
+            Addressables.Release(weaponDataHandle);
+        }
+    }
+
     public void PlaySwitchAudio()
     {
         PlayAudio(switchAudioClip);

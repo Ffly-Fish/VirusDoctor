@@ -76,10 +76,10 @@ public class PlayerController : MonoBehaviour
     public int MaxHealth => maxHealth;
 
     //[SerializeField]
-    //private Weapon defaultWeapon;
+    //private AutoWeapon defaultWeapon;
     [SerializeField]
-    private List<IWeapon> weaponList = new List<IWeapon>();
-    private readonly List<IWeapon> weapons = new List<IWeapon>();
+    private List<WeaponBase> weaponList = new List<WeaponBase>();
+    private readonly List<WeaponBase> weapons = new List<WeaponBase>();
     private int currentWeaponIndex = -1;
 
     private void Awake()
@@ -224,7 +224,7 @@ public class PlayerController : MonoBehaviour
 
     private void ActivateWeapon(string weaponName)
     {
-        foreach (IWeapon weapon in weaponList)
+        foreach (WeaponBase weapon in weaponList)
         {
             if (weapon == null || weapon.weaponParameters == null || weapon.weaponParameters.WeaponName != weaponName)
             {
@@ -256,7 +256,7 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 将武器加入背包；第一件武器会立即装备，其余武器默认收起。
     /// </summary>
-    public bool AddWeapon(IWeapon weapon)
+    public bool AddWeapon(WeaponBase weapon)
     {
         if (weapon == null || !weaponList.Contains(weapon) || weapons.Contains(weapon))
         {
@@ -281,7 +281,7 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 为背包中的指定武器增加子弹。
     /// </summary>
-    public bool AddAmmo(IWeapon weapon, int amount)
+    public bool AddAmmo(WeaponBase weapon, int amount)
     {
         if (weapon == null || amount <= 0 || !weapons.Contains(weapon))
         {
@@ -317,7 +317,7 @@ public class PlayerController : MonoBehaviour
             TrySwitchWeapon();
         }
 
-        IWeapon currentWeapon = weapons[currentWeaponIndex];
+        WeaponBase currentWeapon = weapons[currentWeaponIndex];
         if (InputManager.Instance[InputAction.Fire])
         {
             currentWeapon.Fire();

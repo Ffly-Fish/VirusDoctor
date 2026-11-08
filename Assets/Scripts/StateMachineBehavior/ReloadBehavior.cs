@@ -8,7 +8,7 @@ public class ReloadBehavior : StateMachineBehaviour
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         // 获取当前动画对象上的武器组件。
-        IWeapon weapon = animator.GetComponent<IWeapon>();
+        WeaponBase weapon = animator.GetComponent<WeaponBase>();
         if (weapon != null)
         {
             weapon.CompleteReload();

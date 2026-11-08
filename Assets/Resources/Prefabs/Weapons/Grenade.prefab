@@ -77,5 +77,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 826ff1ae9a87e744b99924c2c70deb7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponParameters: {fileID: 11400000, guid: 5b428673799a0874fa31af30fc29ce91, type: 2}
+  weaponParameters: {fileID: 0}
+  weaponDataAddress: WeaponData/Grenade
   bulletPrefab: {fileID: 0}

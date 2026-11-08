@@ -1,10 +1,11 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
-public class Weapon : IWeapon
+/// <summary>连发武器：按住开火，按射击间隔连续发射。</summary>
+public class AutoWeapon : WeaponBase
 {
     /// <summary>获取武器数据中的界面图标。</summary>
-    public Sprite WeaponSprite => weaponParameters != null ? weaponParameters.WeaponSprite : null;
+    public override Sprite WeaponSprite => weaponParameters != null ? weaponParameters.WeaponSprite : null;
 
     /// <summary>武器自身的动画组件。</summary>
     private Animator animator;
@@ -45,6 +46,9 @@ public class Weapon : IWeapon
     /// </summary>
     public override void Fire()
     {
+        if (!IsDataLoaded)
+            return;
+
         if (!isEquipped || isReloading || currentAmmo <= 0 || Time.time - lastShotTime < shootingInterval)
             return;
 
@@ -66,6 +70,9 @@ public class Weapon : IWeapon
     /// </summary>
     public override void Reload()
     {
+        if (!IsDataLoaded)
+            return;
+
         if (!isEquipped || isReloading || currentAmmo >= magazineCapacity || totalAmmo <= currentAmmo)
             return;
 
