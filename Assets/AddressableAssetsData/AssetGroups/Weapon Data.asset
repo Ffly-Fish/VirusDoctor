@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Weapon Data
+  m_EditorClassIdentifier: 
+  m_GroupName: Weapon Data
+  m_Data:
+    m_SerializedData: []
+  m_GUID: bd5593ab11dd1e4439db58509623bc73
+  m_SerializeEntries:
+  - m_GUID: 5b428673799a0874fa31af30fc29ce91
+    m_Address: WeaponData/Grenade
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - weapon
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aa86ddc3fe0716344b3dc638e10d2aff
+    m_Address: WeaponData/Rifle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - weapon
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0f7366335aee2945b3c71425a2eec4c
+    m_Address: WeaponData/Pistol
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - weapon
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 331e8a733946a6145be003098053e2c3, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: f6bb8d979b187ac43b4689c81bfe8b20, type: 2}
+    - {fileID: 11400000, guid: ca193ef653403d149a161dd9950821e6, type: 2}
